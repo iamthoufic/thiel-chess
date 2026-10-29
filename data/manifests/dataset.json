@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "username": "PeterThiel",
+  "generated_at": "2026-10-29T05:13:52.270Z",
+  "split_method": "chronological_by_game_90_5_5",
+  "games": {
+    "total": 43797,
+    "train": 39417,
+    "validation": 2190,
+    "test": 2190
+  },
+  "positions": {
+    "total": 1715752,
+    "train": 1544158,
+    "validation": 85179,
+    "test": 86415
+  },
+  "results": {
+    "win": 21566,
+    "draw": 3111,
+    "loss": 19120,
+    "unknown": 0
+  },
+  "colors": {
+    "white": 21897,
+    "black": 21900
+  },
+  "parse_errors": [],
+  "source": {
+    "path": "data/raw/peterthiel_chesscom_all_games.pgn.gz",
+    "bytes": 25453459,
+    "sha256": "46eee9f3a30a35269c397e33140e576058f5435c3e75661e29dccb4f44544b63"
+  },
+  "artifacts": {
+    "games": {
+      "path": "data/processed/peterthiel_games.jsonl.gz",
+      "bytes": 14973976,
+      "sha256": "ac087e898f9ddbbb8dd75186ca609b57865481f0c913b38cc157fc8fb077e39c"
+    },
+    "positions": {
+      "path": "data/processed/peterthiel_positions.jsonl.gz",
+      "bytes": 39547953,
+      "sha256": "87230451a1c75a68ee2732a63af97564e60fefcbe7d0e1d7ea8cbe71234f9b42"
+    },
+    "cleanPgn": {
+      "path": "data/processed/peterthiel_games.clean.pgn.gz",
+      "bytes": 9487813,
+      "sha256": "206c6bd59e5785139e47e3ba96fd4b74bd333de8163bf2bce7765c275b0b124a"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+# Fine-tuning and export: training/prepare_data.py, finetune.py, export_onnx.py
+# Install PyTorch for your platform first (https://pytorch.org/get-started/locally/),
+# e.g. CUDA 12.4:  pip install torch --index-url https://download.pytorch.org/whl/cu124
+# Then:            pip install -r requirements-train.txt
+#                  pip install --no-deps maia2==0.11.0
+# (maia2 pins an exact torch version in its metadata; it works with torch >= 2.4,
+#  so it is installed without its dependencies, which are listed here instead.)
+-r requirements.txt
+torch>=2.4
+einops>=0.8
+gdown>=5.2
+pandas>=2.2
+pyyaml>=6.0
+pyzstd<0.20
+requests>=2.32
+tqdm>=4.66
+onnx>=1.16
+onnxscript>=0.1

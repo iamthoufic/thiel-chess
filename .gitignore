@@ -1,0 +1,27 @@
+# dependencies and environments
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Chess.com game data: rebuilt locally with `npm run data` (see data/README.md)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# training outputs (large; the exported model ships in web/model/)
+training/cache/
+training/checkpoints/
+training/*.log
+
+# build output: the single-file offline page (~90 MB), rebuilt with `npm run web:single`
+web/dist/
+
+# editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.vercel

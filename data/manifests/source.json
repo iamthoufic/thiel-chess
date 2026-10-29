@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "username": "PeterThiel",
+  "source": "Chess.com PubAPI",
+  "archive_index": "https://api.chess.com/pub/player/peterthiel/games/archives",
+  "generated_at": "2026-10-21T09:36:14.085Z",
+  "baseline_game_count": 43490,
+  "game_count": 43797,
+  "new_games_added": 307,
+  "games_added_since_baseline": 307,
+  "earliest_game_utc": "2016-12-18T06:31:10.000Z",
+  "latest_game_utc": "2026-10-21T07:58:49.000Z",
+  "raw_file": "peterthiel_chesscom_all_games.pgn",
+  "raw_bytes": 120860445,
+  "raw_sha256": "b60bd797da5c631134f12c920505ad53c1297820630bb37433607dddf2723c29",
+  "gzip_file": "peterthiel_chesscom_all_games.pgn.gz",
+  "gzip_bytes": 25453459,
+  "gzip_sha256": "46eee9f3a30a35269c397e33140e576058f5435c3e75661e29dccb4f44544b63",
+  "fetched_archives": [
+    {
+      "archive": "https://api.chess.com/pub/player/peterthiel/games/2026/09",
+      "returned": 216,
+      "added": 22
+    },
+    {
+      "archive": "https://api.chess.com/pub/player/peterthiel/games/2026/10",
+      "returned": 285,
+      "added": 285
+    }
+  ]
+}

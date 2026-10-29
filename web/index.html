@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en" data-ui="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Thiel Chess</title>
+  <meta name="description" content="Play blitz against Peter, a Maia-2 model trained on 43,797 games from the Chess.com account PeterThiel. Learn the rules, the history of chess, and the story of Peter Thiel.">
+  <link rel="icon" id="favicon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Apply the saved appearance before first paint so the page never flashes.
+    try {
+      const saved = JSON.parse(localStorage.getItem('thiel-chess:settings') || '{}');
+      const ui = saved.ui === 'light' || (saved.ui === 'system' && matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+      document.documentElement.dataset.ui = ui;
+      document.documentElement.dataset.board = saved.board || 'lavender';
+    } catch {}
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="#play" aria-label="Thiel Chess, home" title="Thiel Chess by Mohamed Thoufic">
+      <span class="logo" id="brandLogo"></span>
+      <span class="wordmark">Thiel Chess</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#play" data-view-link="play" class="active"><span data-icon="board"></span><span>Play</span></a>
+      <a href="#openings" data-view-link="openings"><span data-icon="openbook"></span><span>Openings</span></a>
+      <a href="#blog" data-view-link="blog"><span data-icon="article"></span><span>Blog</span></a>
+      <a href="#about" data-view-link="about"><span data-icon="info"></span><span>About</span></a>
+    </nav>
+    <div class="top-actions">
+      <span class="engine-status" id="engineStatus"><i class="edot"></i><span id="engineLabel">Loading Peter</span></span>
+      <button class="icon-btn" id="soundToggle" aria-label="Mute sounds" title="Mute (M)"><span data-icon="volume"></span></button>
+      <button class="icon-btn" id="themeToggle" aria-label="Switch to light theme" title="Light / dark (T)"><span data-icon="moon"></span></button>
+      <button class="icon-btn" id="openSettings" aria-label="Settings" title="Settings"><span data-icon="sliders"></span></button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Play -->
+    <section class="view view-play" id="view-play">
+      <aside class="side-col">
+        <div class="page-title">
+          <h1>Play</h1>
+          <em>vs Peter Thiel</em>
+        </div>
+        <div class="tiles">
+          <button class="tile-btn primary" id="newTile">
+            <span class="tile-ic"><span data-icon="play"></span></span>
+            <span class="tile-text"><b id="newTileTitle">New game</b><small id="newTileSub">3 min · Blitz</small></span>
+          </button>
+          <div class="tiles-live" id="liveActions">
+            <button class="tile-btn" id="askPeter">
+              <span class="tile-ic"><span data-icon="hint"></span></span>
+              <span class="tile-text"><b>Ask Peter</b><small>What would he play?</small></span>
+            </button>
+            <button class="tile-btn" id="takebackBtn">
+              <span class="tile-ic"><span data-icon="undo"></span></span>
+              <span class="tile-text"><b>Take back</b><small>Undo your last move</small></span>
+            </button>
+            <button class="tile-btn" id="drawBtn">
+              <span class="tile-ic"><span data-icon="draw"></span></span>
+              <span class="tile-text"><b>Offer draw</b><small>He judges the position</small></span>
+            </button>
+            <button class="tile-btn tile-danger" id="resignBtn">
+              <span class="tile-ic"><span data-icon="flag"></span></span>
+              <span class="tile-text"><b class="label">Resign</b><small class="sub">Concede the game</small></span>
+            </button>
+          </div>
+          <button class="tile-btn" id="flipBtn">
+            <span class="tile-ic"><span data-icon="flip"></span></span>
+            <span class="tile-text"><b>Flip board</b><small>Other side</small></span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="board-col">
+        <div class="player" id="playerTop"></div>
+        <div class="board-frame"><div class="board" id="board"></div></div>
+        <div class="player" id="playerBottom"></div>
+      </div>
+
+      <aside class="panel">
+        <!-- before a game -->
+        <div class="panel-page" id="setup">
+          <div class="panel-top">
+            <div>
+              <div class="chip-row"><span class="chip chip-go" id="setupChip">Blitz</span><span class="mono-label">New game</span></div>
+              <div class="status">Choose your game</div>
+            </div>
+          </div>
+          <div class="profile">
+            <img class="profile-photo" src="img/peter/profile.webp" alt="Peter, the chess mascot">
+            <div class="profile-text">
+              <div class="profile-name">Peter Thiel</div>
+              <p class="profile-handle">PeterThiel on Chess.com</p>
+            </div>
+          </div>
+          <dl class="stat-strip">
+            <div><dt>Blitz</dt><dd>2202</dd></div>
+            <div><dt>Games</dt><dd>43.8K</dd></div>
+            <div><dt>Wins</dt><dd>49%</dd></div>
+          </dl>
+          <button class="record-row" id="historyOpen" type="button" hidden>
+            <span class="record-ic"><span data-icon="history"></span></span>
+            <span class="record-text"><span class="mono-label">You vs Peter</span><span class="record" id="recordLine"></span></span>
+            <span class="record-more">Your games<span data-icon="next"></span></span>
+          </button>
+          <div class="group">
+            <div class="mono-label">Time control</div>
+            <div class="choice-grid" id="timeChips">
+              <button class="choice" data-tc="60+0">1 min</button>
+              <button class="choice active" data-tc="180+0">3 min</button>
+              <button class="choice" data-tc="180+2">3 | 2</button>
+              <button class="choice" data-tc="300+0">5 min</button>
+              <button class="choice" data-tc="600+0">10 min</button>
+              <button class="choice" data-tc="0+0">Unlimited</button>
+            </div>
+          </div>
+          <div class="group">
+            <div class="mono-label">Play as</div>
+            <div class="segmented" id="colorSeg">
+              <button data-color="w"><img src="pieces/cburnett/wK.svg" alt="">White</button>
+              <button data-color="r" class="active"><span class="split-king"><img src="pieces/cburnett/wK.svg" alt=""><img src="pieces/cburnett/bK.svg" alt=""></span>Random</button>
+              <button data-color="b"><img src="pieces/cburnett/bK.svg" alt="">Black</button>
+            </div>
+          </div>
+          <div class="play-block">
+            <button class="btn btn-primary btn-play" id="playBtn" disabled>Play</button>
+            <div class="load-line" id="loadLine"><span class="load-bar"><i id="loadBar"></i></span><span id="loadText">Loading Peter</span></div>
+          </div>
+          <p class="fineprint">Trained on public games from the Chess.com account PeterThiel. Not affiliated with Peter Thiel or Chess.com.</p>
+        </div>
+
+        <!-- during and after a game -->
+        <div class="panel-page panel-game" id="game" hidden>
+          <div class="panel-top">
+            <div>
+              <div class="chip-row"><span class="chip chip-go" id="gameChip">Blitz</span><span class="mono-label" id="gameMove">Move 1</span></div>
+              <div class="status" id="gameTitle">Your move</div>
+            </div>
+            <span class="mono-label game-mode" id="gameMode">3 min</span>
+          </div>
+
+          <div class="acc-strip" id="accStrip" hidden>
+            <div><span class="mono-label">Your accuracy</span><b id="accYou">&ndash;</b></div>
+            <div><span class="mono-label">Peter&rsquo;s accuracy</span><b id="accPeter">&ndash;</b></div>
+          </div>
+
+          <div class="coach" id="coach" hidden>
+            <img class="coach-face" id="coachFace" src="img/peter/react-good.webp" alt="">
+            <div class="coach-text">
+              <div class="coach-head"><span class="badge" id="coachBadge"></span><span class="coach-title" id="coachTitle">Best</span><span class="coach-eval" id="coachEval"></span></div>
+              <p class="coach-line" id="coachLine"></p>
+            </div>
+          </div>
+
+          <div class="section insight" id="insight" hidden>
+            <div class="mono-label" id="insightTitle">Peter&rsquo;s choice</div>
+            <div class="insight-body" id="insightBody"></div>
+          </div>
+
+          <div class="moves" id="moves" tabindex="0" aria-label="Move list"></div>
+          <div class="review-progress" id="reviewProgress" hidden><span class="load-bar"><i id="reviewBar"></i></span><span id="reviewText">Stockfish is reviewing</span></div>
+
+          <div class="nav-row">
+            <button class="nav-btn" data-nav="start" title="First move (Home)"><span data-icon="first"></span></button>
+            <button class="nav-btn" data-nav="prev" title="Previous move (&larr;)"><span data-icon="prev"></span></button>
+            <button class="nav-btn" data-nav="next" title="Next move (&rarr;)"><span data-icon="next"></span></button>
+            <button class="nav-btn" data-nav="end" title="Last move (End)"><span data-icon="last"></span></button>
+          </div>
+
+          <div class="actions-over" id="overActions" hidden>
+            <button class="btn btn-primary btn-wide" id="reviewBtn"><span data-icon="star"></span>Game Review</button>
+            <div class="modal-actions-2">
+              <button class="btn btn-secondary" id="newGameBtn"><span data-icon="plus"></span>New game</button>
+              <button class="btn btn-secondary" id="rematchBtn"><span data-icon="refresh"></span>Rematch</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Openings -->
+    <section class="view view-openings" id="view-openings" hidden>
+      <aside class="side-col">
+        <div class="page-title">
+          <h1>Openings</h1>
+          <em>his repertoire</em>
+        </div>
+        <p class="side-lede">Every move he played at least three times in the first ten moves, and how those games went.</p>
+        <div class="segmented segmented-2" id="explorerSide">
+          <button data-side="w" class="active"><img src="pieces/cburnett/wK.svg" alt="">As White</button>
+          <button data-side="b"><img src="pieces/cburnett/bK.svg" alt="">As Black</button>
+        </div>
+        <div class="tiles">
+          <button class="tile-btn" id="explorerBack"><span class="tile-ic"><span data-icon="prev"></span></span><span class="tile-text"><b>Back</b><small>One move up</small></span></button>
+          <button class="tile-btn" id="explorerReset"><span class="tile-ic"><span data-icon="first"></span></span><span class="tile-text"><b>Start position</b><small>Begin again</small></span></button>
+        </div>
+      </aside>
+      <div class="board-col">
+        <div class="board-frame"><div class="board" id="explorerBoard"></div></div>
+      </div>
+      <aside class="panel">
+        <div class="panel-page">
+          <div class="section">
+            <div class="mono-label">Line</div>
+            <div class="explorer-path" id="explorerPath"></div>
+          </div>
+          <div class="section section-fill">
+            <div class="mono-label">Next moves</div>
+            <div class="explorer-list" id="explorerList"></div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Blog -->
+    <section class="view view-blog" id="view-blog" hidden>
+      <div class="blog" id="blogBody"></div>
+    </section>
+
+    <!-- About -->
+    <section class="view view-about" id="view-about" hidden>
+      <article class="about article" id="aboutBody"></article>
+    </section>
+  </main>
+
+  <!-- Settings -->
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="sheet" id="settings" aria-label="Settings" aria-hidden="true">
+    <div class="sheet-head">
+      <h2 class="sheet-title">Settings</h2>
+      <button class="icon-btn" id="closeSettings" aria-label="Close settings"><span data-icon="x"></span></button>
+    </div>
+    <div class="sheet-body">
+      <section class="set-group">
+        <h3 class="mono-label">You</h3>
+        <div class="row-static photo-row"><span>Profile photo</span>
+          <div class="photo-ctl">
+            <span class="avatar avatar-you" id="photoPreview"><span data-icon="user"></span></span>
+            <button class="btn btn-ghost btn-sm" id="photoPick" type="button">Upload</button>
+            <button class="link-btn" id="photoRemove" type="button" hidden>Remove</button>
+            <input type="file" id="photoFile" accept="image/*" hidden>
+          </div>
+        </div>
+        <label class="row-static name-row"><span>Your name</span>
+          <input class="text-input" id="optName" type="text" maxlength="20" placeholder="Optional" autocomplete="nickname" spellcheck="false">
+        </label>
+        <label class="row-static name-row"><span>Your rating</span>
+          <input class="text-input" id="optRating" type="number" inputmode="numeric" min="100" max="3500" step="1" placeholder="e.g. 1500">
+        </label>
+        <label class="row-static name-row"><span>Country</span>
+          <select class="text-input" id="optCountry"><option value="">None</option></select>
+        </label>
+        <div class="rows">
+          <label class="row"><span>Show my rating and flag</span><input type="checkbox" id="optShowMe"><i class="switch"></i></label>
+        </div>
+        <p class="caption">Your name, photo, rating and flag appear on your player bar (rating and flag only when switched on). Everything stays on this device.</p>
+      </section>
+      <section class="set-group">
+        <h3 class="mono-label">Games</h3>
+        <div class="row-static"><span>Game history</span><button class="btn btn-ghost btn-sm" id="historyClear" type="button">Clear</button></div>
+        <p class="caption" id="historyCaption">Your last 20 games and your all-time record against Peter are kept on this device.</p>
+      </section>
+      <section class="set-group">
+        <h3 class="mono-label">Appearance</h3>
+        <div class="segmented" id="uiSeg">
+          <button data-ui="dark">Dark</button>
+          <button data-ui="light">Light</button>
+          <button data-ui="system">System</button>
+        </div>
+      </section>
+      <section class="set-group">
+        <h3 class="mono-label">Board</h3>
+        <div class="themes" id="themes"></div>
+      </section>
+      <section class="set-group">
+        <h3 class="mono-label">Peter</h3>
+        <div class="row-static"><span>Move speed</span>
+          <div class="segmented segmented-sm" id="paceSeg">
+            <button data-pace="instant">Instant</button>
+            <button data-pace="human">Human</button>
+            <button data-pace="relaxed">Relaxed</button>
+          </div>
+        </div>
+        <p class="caption">Human uses how long he really took on each move in his games. Sharpest always plays his most likely move.</p>
+        <div class="row-static"><span>Strength</span>
+          <div class="segmented segmented-sm" id="styleSeg">
+            <button data-style="human">Human</button>
+            <button data-style="top">Sharpest</button>
+          </div>
+        </div>
+        <div class="rows">
+          <label class="row"><span>Use his opening book</span><input type="checkbox" id="optBook"><i class="switch"></i></label>
+          <label class="row"><span>Show his move choices</span><input type="checkbox" id="optInsight"><i class="switch"></i></label>
+        </div>
+      </section>
+      <section class="set-group">
+        <h3 class="mono-label">Sound and touch</h3>
+        <div class="rows">
+          <label class="row"><span>Move sounds</span><input type="checkbox" id="optSound"><i class="switch"></i></label>
+        </div>
+        <div class="volume"><span data-icon="volume-low"></span><input type="range" id="optVolume" min="0" max="100" step="1" aria-label="Volume"><span data-icon="volume"></span></div>
+        <div class="rows">
+          <label class="row"><span>Vibrate when time is low</span><input type="checkbox" id="optHaptics"><i class="switch"></i></label>
+        </div>
+        <p class="caption">Vibration works on phones and tablets that support it.</p>
+      </section>
+      <section class="set-group">
+        <h3 class="mono-label">Gameplay</h3>
+        <div class="row-static"><span>Piece speed</span>
+          <div class="segmented segmented-sm" id="animSeg">
+            <button data-anim="0">Off</button>
+            <button data-anim="140">Fast</button>
+            <button data-anim="220">Normal</button>
+          </div>
+        </div>
+        <div class="rows">
+          <label class="row"><span>Show legal moves</span><input type="checkbox" id="optLegal"><i class="switch"></i></label>
+          <label class="row"><span>Highlight last move</span><input type="checkbox" id="optLast"><i class="switch"></i></label>
+          <label class="row"><span>Coordinates</span><input type="checkbox" id="optCoords"><i class="switch"></i></label>
+          <label class="row"><span>Always promote to queen</span><input type="checkbox" id="optQueen"><i class="switch"></i></label>
+        </div>
+      </section>
+      <section class="set-group">
+        <h3 class="mono-label">Keyboard</h3>
+        <div class="keys">
+          <div class="key-row"><span class="keycaps"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span></span><span>Step through the game</span></div>
+          <div class="key-row"><span class="keycaps"><span class="kbd">Home</span><span class="kbd">End</span></span><span>First and last move</span></div>
+          <div class="key-row"><span class="keycaps"><span class="kbd">F</span></span><span>Flip the board</span></div>
+          <div class="key-row"><span class="keycaps"><span class="kbd">T</span></span><span>Light or dark</span></div>
+          <div class="key-row"><span class="keycaps"><span class="kbd">M</span></span><span>Mute sounds</span></div>
+          <div class="key-row"><span class="keycaps"><span class="kbd">Esc</span></span><span>Close a panel</span></div>
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <!-- Game over -->
+  <aside class="sheet" id="historySheet" aria-label="Your games" aria-hidden="true">
+    <div class="sheet-head">
+      <h2 class="sheet-title">Your games</h2>
+      <button class="icon-btn" id="closeHistory" aria-label="Close your games"><span data-icon="x"></span></button>
+    </div>
+    <div class="sheet-body">
+      <dl class="stat-strip hist-strip" id="historyStats"></dl>
+      <div class="mono-label hist-label" id="historyLabel">Recent games</div>
+      <div class="hist-list" id="historyList"></div>
+      <p class="caption hist-note">Open a game to see it in Game Review. The last 20 games are kept; your record counts every game. Best accuracy counts games where you made 10 or more moves.</p>
+    </div>
+  </aside>
+
+  <div class="modal-wrap" id="resultModal" hidden>
+    <div class="modal result" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+      <button class="icon-btn modal-x" id="closeResult" aria-label="Close"><span data-icon="x"></span></button>
+      <div class="result-head">
+        <h2 class="result-title" id="resultTitle">You won</h2>
+        <p class="result-reason" id="resultReason">by checkmate</p>
+      </div>
+      <div class="result-players">
+        <div class="rp" id="rpYou">
+          <span class="rp-frame"><span class="rp-avatar" id="rpAvatarYou"><span data-icon="user"></span></span></span>
+          <span class="rp-name" id="rpNameYou">You</span>
+          <span class="rp-acc" id="rpAccYou"></span>
+        </div>
+        <span class="rp-score" id="resultScore">1 &ndash; 0</span>
+        <div class="rp" id="rpPeter">
+          <span class="rp-frame"><img class="rp-avatar" src="img/peter/profile.webp" alt=""></span>
+          <span class="rp-name">Peter</span>
+          <span class="rp-acc" id="rpAccPeter"></span>
+        </div>
+      </div>
+      <div class="say">
+        <img class="say-face" id="resultPhoto" src="img/peter/smile.webp" alt="Peter">
+        <p class="say-bubble" id="resultSay">Let me look at that game.</p>
+      </div>
+      <div class="tally" id="tally"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary btn-wide btn-review" id="modalReview"><span data-icon="star"></span>Game Review</button>
+        <div class="modal-actions-2">
+          <button class="btn btn-secondary" id="modalNew"><span data-icon="plus"></span><span id="modalNewLabel">New 3 min</span></button>
+          <button class="btn btn-secondary" id="modalRematch"><span data-icon="refresh"></span>Rematch</button>
+        </div>
+        <button class="link-btn" id="modalPgn"><span data-icon="copy"></span><span>Copy PGN</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

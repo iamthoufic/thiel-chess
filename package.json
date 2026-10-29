@@ -1,0 +1,23 @@
+{
+  "name": "thiel-chess",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Play chess against a neural model of the Chess.com account PeterThiel: data pipeline, Maia-2 fine-tuning and an in-browser web app.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "start": "node web/serve.mjs --port 8080",
+    "data:fetch": "node pipeline/fetch-games.mjs",
+    "data:build": "node pipeline/build-dataset.mjs",
+    "data": "npm run data:fetch && npm run data:build",
+    "web:book": "node web/tools/build-book.mjs",
+    "web:single": "node web/tools/build-single.mjs",
+    "test": "node --test tests/pipeline.test.mjs"
+  },
+  "devDependencies": {
+    "chess.js": "^1.4.0",
+    "esbuild": "^0.28.0"
+  }
+}

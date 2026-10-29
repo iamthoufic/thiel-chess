@@ -1,0 +1,36 @@
+[Event "Live Chess"]
+[Site "Chess.com"]
+[Date "2024.01.02"]
+[Round "-"]
+[White "PeterThiel"]
+[Black "Opponent1"]
+[Result "1-0"]
+[UTCDate "2024.01.02"]
+[UTCTime "10:00:00"]
+[WhiteElo "2100"]
+[BlackElo "2050"]
+[TimeControl "180"]
+[ECO "C20"]
+[Termination "PeterThiel won by checkmate"]
+[Link "https://www.chess.com/game/live/1001"]
+
+1. e4 {[%clk 0:02:59]} 1... e5 {[%clk 0:02:59]} 2. Qh5 {[%clk 0:02:57]} 2... Nc6 {[%clk 0:02:58]} 3. Bc4 {[%clk 0:02:55]} 3... Nf6 {[%clk 0:02:56]} 4. Qxf7# {[%clk 0:02:54]} 1-0
+
+
+[Event "Live Chess"]
+[Site "Chess.com"]
+[Date "2024.01.01"]
+[Round "-"]
+[White "Opponent2"]
+[Black "PeterThiel"]
+[Result "0-1"]
+[UTCDate "2024.01.01"]
+[UTCTime "09:00:00"]
+[WhiteElo "2080"]
+[BlackElo "2110"]
+[TimeControl "180"]
+[ECO "B20"]
+[Termination "PeterThiel won by resignation"]
+[Link "https://www.chess.com/game/live/1000"]
+
+1. e4 {[%clk 0:02:59]} 1... c5 {[%clk 0:02:59]} 2. Nf3 {[%clk 0:02:58]} 2... d6 {[%clk 0:02:57]} 0-1

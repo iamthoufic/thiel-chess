@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thiel Chess · Model parity test</title>
+  <style>
+    body { margin: 0; padding: 32px; background: #1b1a18; color: #eeece6; font: 15px/1.5 "Segoe UI", system-ui, sans-serif; }
+    h1 { font-weight: 600; margin: 0 0 4px; }
+    p { color: #bdb9af; margin: 0 0 18px; }
+    .row { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.08); font-family: Consolas, monospace; font-size: 13px; }
+    .pass { color: #81b64c; } .fail { color: #e5604f; }
+    #summary { font-size: 20px; font-weight: 700; margin: 12px 0 20px; }
+  </style>
+</head>
+<body>
+  <h1>Model parity test</h1>
+  <p>Checks that the browser encodes positions, lists legal moves and scores them exactly like the Python Maia-2 code (vectors written by <code>training/export_onnx.py</code>).</p>
+  <div id="summary">Running…</div>
+  <div id="rows"></div>
+  <script type="module">
+    import { Chess } from '../vendor/chess.js';
+    import { encodeFen, legalIndices } from '../js/encode.js';
+    import { Engine } from '../js/engine.js';
+
+    const out = (cls, text) => document.getElementById('rows').insertAdjacentHTML('beforeend', `<div class="row ${cls}">${text}</div>`);
+    const moves = await (await fetch('../model/moves.json')).json();
+    const moveIndex = Object.fromEntries(moves.map((m, i) => [m, i]));
+    const { vectors } = await (await fetch('vectors.json')).json();
+    const engine = new Engine();
+    await engine.ready;
+
+    let failures = 0;
+    let maxDiff = 0;
+    for (const v of vectors) {
+      const nz = [];
+      encodeFen(v.fen).forEach((x, i) => { if (x) nz.push(i); });
+      const legal = legalIndices(new Chess(v.fen), moveIndex).map((m) => m.index).sort((a, b) => a - b);
+      const r = await engine.analyze(v.fen);
+      let diff = 0;
+      for (const [uci, p] of v.top) diff = Math.max(diff, Math.abs((r.moves.find((m) => m.uci === uci)?.p ?? 0) - p));
+      diff = Math.max(diff, Math.abs(r.value - v.value));
+      maxDiff = Math.max(maxDiff, diff);
+      const ok = JSON.stringify(nz) === JSON.stringify(v.nonzero) && JSON.stringify(legal) === JSON.stringify(v.legal) && diff < 1e-3;
+      if (!ok) failures += 1;
+      out(ok ? 'pass' : 'fail', `${ok ? 'PASS' : 'FAIL'} &nbsp; ${v.fen} &nbsp; top ${r.moves[0]?.uci ?? '-'} (${v.top[0]?.[0] ?? '-'}) &nbsp; Δ ${diff.toExponential(1)}`);
+    }
+    const s = document.getElementById('summary');
+    s.className = failures ? 'fail' : 'pass';
+    s.textContent = failures ? `${failures} of ${vectors.length} positions failed` : `All ${vectors.length} positions match Python (max difference ${maxDiff.toExponential(1)})`;
+    document.title = failures ? 'FAIL' : 'PASS';
+  </script>
+</body>
+</html>
