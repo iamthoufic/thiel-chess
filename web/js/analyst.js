@@ -15,6 +15,7 @@ export class Analyst {
     this.waiter = null;
     this.booted = null;
     this.onProgress = null;
+    this.after = null; // a promise to wait for before downloading Stockfish
   }
 
   // Analyse a position; resolves with the two best lines, scores from the side to move.
@@ -40,6 +41,7 @@ export class Analyst {
 
   #boot() {
     this.booted ??= (async () => {
+      await this.after; // set by the app: start only once Peter's network has loaded
       if (inline) {
         // single file: the worker cannot fetch on file://, so it gets the bytes
         // (tools/build-single.mjs adds the small handler that receives them)

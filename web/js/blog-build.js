@@ -72,7 +72,7 @@ export const BUILD_ARTICLES = [
         <div class="stage"><b>Clean</b><span>De-duplicate, replay every move, split by date into train, validation and test.</span><em>PGN → JSONL</em></div>
         <div class="stage"><b>Encode</b><span>Each of his 1.72M moves becomes a board tensor and a target move.</span><em>python-chess · NumPy</em></div>
         <div class="stage"><b>Train</b><span>Fine-tune Maia-2 on a laptop GPU, keep the best validation checkpoint.</span><em>PyTorch</em></div>
-        <div class="stage"><b>Export</b><span>Convert to ONNX, store weights at 16-bit, check against PyTorch.</span><em>ONNX · ONNX Runtime</em></div>
+        <div class="stage"><b>Export</b><span>Convert to ONNX, store weights at 8 and 16 bits, check against PyTorch.</span><em>ONNX · ONNX Runtime</em></div>
         <div class="stage"><b>Play</b><span>Run the model in a Web Worker next to a rules engine and his opening book.</span><em>ONNX Runtime Web · chess.js</em></div>
       </div>
       ${code('project layout', `
@@ -84,7 +84,7 @@ analysis/eda.py           the exploratory analysis and its charts
 training/
   prepare_data.py         encode positions for the network
   finetune.py             training loop, evaluation, early stopping
-  export_onnx.py          ONNX export, 16-bit weights, parity vectors
+  export_onnx.py          ONNX export, 8/16-bit weights, parity vectors
   predict.py              his likely moves for any position, from Python
 web/
   model/                  thiel-maia2.onnx, book.json, timing.json, moves.json
@@ -95,7 +95,7 @@ web/
   tools/                  book, timing and single-file builders`)}
 
       <h2 id="browser">Why the model runs in the browser</h2>
-      <p>I wanted Peter to cost nothing to host and to work offline, so there is no game server. The browser downloads one <b>42.5 MB</b> model and runs it with <b>ONNX Runtime Web</b>, which compiles the network to WebAssembly. Inference happens in a <b>Web Worker</b>, a background thread, so the board never freezes while Peter thinks. When the page is served with cross-origin isolation headers the worker uses several CPU cores; opened as a plain file it falls back to one, which is still well under a second per move.</p>
+      <p>I wanted Peter to cost nothing to host and to work offline, so there is no game server. The browser downloads one <b>27.4 MB</b> model and runs it with <b>ONNX Runtime Web</b>, which compiles the network to WebAssembly. Inference happens in a <b>Web Worker</b>, a background thread, so the board never freezes while Peter thinks. When the page is served with cross-origin isolation headers the worker uses several CPU cores; opened as a plain file it falls back to one, which is still well under a second per move.</p>
       <p>To make it shareable as a download, a build step embeds everything (page, fonts, pieces, opening book, runtime and model) into a <b>single 77.9 MB HTML file</b> that opens straight from disk.</p>
 
       <h2 id="decision">How Peter chooses a move</h2>
@@ -135,7 +135,7 @@ const scores = legal.map((m) => Math.exp(out.logits.data[m.index] - max));`)}
       <h2 id="checks">How I checked it</h2>
       <ul>
         <li><b>Python against JavaScript.</b> A test page encodes 65 positions in the browser, including castling, en passant and promotion cases, and compares the tensors, the legal moves and the model's probabilities with vectors written by the Python exporter. The largest difference is 0.0000063.</li>
-        <li><b>ONNX against PyTorch.</b> The exported model picks the same top move as PyTorch on all 605 check positions; 16-bit weights move no probability by more than 0.35 percentage points.</li>
+        <li><b>ONNX against PyTorch.</b> The exported model picks the same top move as PyTorch in 99.75% of check positions, and matches his real moves as often as the full-precision export does (63.2% against 63.0% on 4,000 test positions).</li>
         <li><b>The app itself.</b> An automated suite of 107 in-browser checks covers settings, clocks, castling, en passant, promotion, every way a game can end, takebacks, the result card, the Stockfish review, the opening explorer and this blog, plus layout checks at five screen widths from phone to desktop.</li>
       </ul>
 
@@ -203,7 +203,7 @@ for step in range(total_steps):
       <h2 id="did-not-work">What did not work</h2>
       <ul>
         <li><b>A second, gentler training stage.</b> Restarting from the best checkpoint at a five-times lower learning rate made validation worse at its first check (log-loss 1.133 against 1.125), so I kept the first stage's model.</li>
-        <li><b>8-bit compression.</b> Quantising the weights to 8 bits cut the file to 39 MB but changed the top move in about 5% of positions, which is too much for a model whose whole point is fidelity. Storing weights at 16 bits instead halved the size to 42.5 MB with the same top move on every check position.</li>
+        <li><b>8-bit compression.</b> Quantising the whole network to 8 bits cut the file to 39 MB but changed the top move in about 5% of positions, which is too much for a model whose whole point is fidelity. What worked was more selective: the transformer's and heads' weights stored in 8 bits with a scale per output channel, the convolutions kept at 16 bits (their weights have outliers), and all arithmetic in full precision. That brought the download to 27.4 MB with no loss in how often it predicts his real move.</li>
       </ul>`,
   },
   {

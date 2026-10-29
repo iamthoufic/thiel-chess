@@ -20,14 +20,15 @@ inference. Any static host works; for Vercel see the root `README.md`
 | `js/analyst.js`, `js/quality.js` | Game Review with Stockfish |
 | `js/board.js` | the chessboard |
 | `js/openings.js` | the opening explorer |
-| `model/thiel-maia2.onnx` | the fine-tuned network (42.5 MB) |
+| `model/thiel-maia2.onnx` | the fine-tuned network (27.4 MB: int8 linear layers, fp16 convolutions) |
+| `model/model.json` | the model's size, for the download progress bar |
 | `model/book.json` | his opening statistics, first 10 moves (`tools/build-book.mjs`) |
 | `model/timing.json` | how long he thinks per move (`tools/build-timing.py`) |
 | `model/metrics.json`, `model/moves.json` | evaluation numbers and the 1,880-move vocabulary |
 | `vendor/` | chess.js, ONNX Runtime Web, Stockfish 17.1 lite (see `THIRD_PARTY_NOTICES.md`) |
 | `tests/index.html` | in-browser parity test: open `/tests/` on the running server |
 | `tests/qa.mjs` | in-browser QA suite: in the console, `const qa = await import('/tests/qa.mjs'); await qa.run()` |
-| `tools/build-single.mjs` | `npm run web:single` builds `dist/Thiel Chess.html`, one ~90 MB file that runs offline |
+| `tools/build-single.mjs` | `npm run web:single` builds `dist/Thiel Chess.html`, one ~68 MB file that runs offline |
 
 Rebuilding the data files after re-running the pipeline:
 

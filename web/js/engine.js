@@ -39,7 +39,8 @@ export class Engine {
 
   // Multi-threaded loading can stall forever while creating the session when the
   // device is short of memory. If the network is not ready shortly after the
-  // download finishes, start again on a single thread, which always loads.
+  // download (model and runtime) finishes, start again on a single thread,
+  // which always loads. Slow phones can need a while to build the session.
   #start(single) {
     const name = `${inline ? 'inline' : 'fetch'}${single ? '-single' : ''}`;
     this.worker = inline
@@ -56,7 +57,7 @@ export class Engine {
     this.worker.onmessage = ({ data }) => {
       if (data.type === 'progress') {
         this.onStatus?.('loading', data.value);
-        if (data.value >= 1 && !single) this.#watchdog = setTimeout(() => fallBack('timed out'), 10_000);
+        if (data.value >= 1 && !single) this.#watchdog = setTimeout(() => fallBack('timed out'), 20_000);
       } else if (data.type === 'ready') {
         clearTimeout(this.#watchdog);
         this.state = 'ready';

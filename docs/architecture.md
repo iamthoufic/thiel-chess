@@ -19,7 +19,7 @@ browser. The exported model, `web/model/thiel-maia2.onnx`, is the hand-off.
             │  training/finetune.py            Maia-2 blitz → fine-tuned on his moves (PyTorch)
             ▼
  training/checkpoints/best.pt
-            │  training/export_onnx.py         ONNX, fp16-stored weights, parity check vs PyTorch
+            │  training/export_onnx.py         ONNX, int8/fp16 weights, parity check vs PyTorch
             ▼
  web/model/thiel-maia2.onnx  ──────────────►  training/predict.py (Python, ONNX Runtime)
             │
@@ -92,9 +92,12 @@ test split scored once. Details and results in
 | Top-3 accuracy | 81.3% | **87.6%** |
 | Opening top-1 (ply 1-20) | 47.5% | **77.4%** |
 
-**Export**: ONNX (opset 17), policy and value heads only. Weights are stored
-as fp16 and cast to fp32 at load (42.5 MB, 100% top-move agreement with
-PyTorch on test positions). `export_onnx.py` also writes
+**Export**: ONNX (opset 17), policy and value heads only. The linear layers'
+weights are stored as int8 with a scale per output channel, everything else
+(including the convolutions) as fp16, and all of it is expanded to fp32 at
+load, so the arithmetic is full precision. 27.4 MB instead of 85 MB at fp32;
+same top move as PyTorch in 99.75% of check positions, and on 4,000 test
+positions it matches his real move as often as the fp16 model did. `export_onnx.py` also writes
 `web/tests/vectors.json`, reference inputs and outputs that the JavaScript
 encoder and `training/predict.py` are checked against.
 
@@ -142,6 +145,16 @@ Around it:
 | `js/flags.js`, `js/logo.js` | SVG flags and the pawn logo / theme-coloured favicon |
 | `js/blog.js`, `js/about.js` | the Blog and About pages |
 
+**Loading fast.** A first visit downloads about 36 MB (the model 27 MB,
+ONNX Runtime 3 MB, Stockfish 5.6 MB, the opening book 0.3 MB, all compressed
+by the host). The page does not wait for all of it: **you can start a game as
+soon as the opening book is in**, because Peter plays his first ten moves from
+the book while the network keeps downloading; if the network is needed before
+it arrives, he shows its progress while "thinking". Stockfish, needed only for
+Game Review, starts downloading after the network has loaded so the two do not
+compete for bandwidth. Static assets are cached by the browser; the model is
+revalidated with its ETag so a new deploy is picked up at once.
+
 **Cross-origin isolation.** When served with `Cross-Origin-Opener-Policy:
 same-origin` and `Cross-Origin-Embedder-Policy: require-corp`, the browser
 allows `SharedArrayBuffer`, and ONNX Runtime Web uses several CPU threads.
@@ -149,7 +162,7 @@ allows `SharedArrayBuffer`, and ONNX Runtime Web uses several CPU threads.
 Without them the model still runs on one thread, well under a second a move.
 
 **Single-file build.** `npm run web:single` embeds the page, fonts, pieces,
-book, runtime, model and Stockfish into one ~90 MB HTML file that opens from
+book, runtime, model and Stockfish into one ~68 MB HTML file that opens from
 disk with no server.
 
 **Privacy.** Settings, your name, photo, rating, flag and game history are

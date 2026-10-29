@@ -15,21 +15,30 @@ let moveIndex = null;
 let receiveAssets;
 const inlineAssets = self.name.startsWith('inline') ? new Promise((resolve) => { receiveAssets = resolve; }) : null;
 
-async function fetchWithProgress(url, onProgress) {
+// Download with progress. Hosts that compress on the fly (Vercel serves the
+// model with Brotli) send no Content-Length, or the compressed one, so the
+// expected size comes from model/model.json instead; the bytes are collected
+// in chunks and joined at the end, whatever the real size turns out to be.
+async function fetchWithProgress(url, expected, onProgress) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
-  const total = Number(response.headers.get('content-length')) || 0;
-  if (!response.body || !total) return new Uint8Array(await response.arrayBuffer());
+  const header = response.headers.get('content-encoding') ? 0 : Number(response.headers.get('content-length')) || 0;
+  const total = expected || header;
+  if (!response.body) return new Uint8Array(await response.arrayBuffer());
   const reader = response.body.getReader();
-  const bytes = new Uint8Array(total);
+  const chunks = [];
   let received = 0;
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
-    bytes.set(value, received);
+    chunks.push(value);
     received += value.length;
-    onProgress(received / total);
+    if (total) onProgress(Math.min(0.99, received / total));
   }
+  const bytes = new Uint8Array(received);
+  let at = 0;
+  for (const chunk of chunks) { bytes.set(chunk, at); at += chunk.length; }
+  onProgress(1);
   return bytes;
 }
 
@@ -43,10 +52,27 @@ async function load() {
     bytes = assets.model;
     postMessage({ type: 'progress', value: 1 });
   } else {
-    ort.env.wasm.wasmPaths = new URL('../vendor/ort/', import.meta.url).href;
+    const runtime = new URL('../vendor/ort/', import.meta.url);
+    ort.env.wasm.wasmPaths = runtime.href;
+    // Download ONNX Runtime's WebAssembly alongside the model rather than after
+    // it: left to itself the runtime only starts that download when the session
+    // is created, so on a slow connection the page's "loaded but not ready"
+    // watchdog could fire and start everything over. This only warms the HTTP
+    // cache (vendor/ is cacheable) for the runtime's own request: handing it the
+    // bytes as wasmBinary stalls the multi-threaded build.
+    const wasm = fetch(new URL('ort-wasm-simd-threaded.wasm', runtime))
+      .then((r) => r.arrayBuffer()).catch(() => null);
     const base = new URL('../model/', import.meta.url);
-    moves = await (await fetch(new URL('moves.json', base))).json();
-    bytes = await fetchWithProgress(new URL('thiel-maia2.onnx', base), (p) => postMessage({ type: 'progress', value: p }));
+    const [list, info] = await Promise.all([
+      fetch(new URL('moves.json', base)).then((r) => r.json()),
+      fetch(new URL('model.json', base)).then((r) => r.json()).catch(() => ({})),
+    ]);
+    moves = list;
+    // progress stops short of 100% until the runtime is in hand as well
+    bytes = await fetchWithProgress(new URL('thiel-maia2.onnx', base), info.bytes,
+      (p) => postMessage({ type: 'progress', value: Math.min(p, 0.99) }));
+    await wasm;
+    postMessage({ type: 'progress', value: 1 });
   }
   moveIndex = Object.fromEntries(moves.map((m, i) => [m, i]));
   // Low-memory options: no arena or memory pattern caching. Many laptops have

@@ -60,10 +60,24 @@ GTX 1650 (4 GB).
 - **Selection**: validation log-loss with illegal moves masked, 4 times per
   epoch; the best checkpoint is kept and training stops after `--patience`
   evaluations without improvement. The test split is scored once, at the end.
-- **Export**: ONNX opset 17 with fp16-stored weights cast to fp32 at load
-  (42.5 MB, same top move as PyTorch in 100% of test positions, largest
-  probability change 0.35%). The int8 version changed the top move in 5% of
-  positions and is rejected automatically.
+- **Export**: ONNX opset 17. `export_onnx.py` builds four variants, checks
+  each against PyTorch on 405 test positions and ships the smallest faithful
+  one:
+
+  | Variant | Size | Same top move as PyTorch | Max value change | Shipped |
+  | --- | ---: | ---: | ---: | --- |
+  | fp32 | 85.0 MB | 100% | 0.000 | |
+  | fp16 weights | 42.5 MB | 100% | 0.007 | |
+  | **int8 linear layers + fp16 rest** | **27.4 MB** | **99.75%** | **0.021** | **yes** |
+  | int8 dynamic (weights and activations) | 39.3 MB | 96.5% | 0.071 | rejected |
+
+  In the shipped variant only the weights are stored in 8 bits (one scale per
+  output channel) and the arithmetic stays fp32. The convolutions are kept at
+  fp16: their batch-norm-folded weights have outliers, and int8 there moved
+  the value head by up to 0.5. Scored against his real moves on 4,000 test
+  positions, the shipped model and the fp16 one are equally accurate (63.2%
+  vs 63.0% top-1). The export also writes `web/model/model.json` with the
+  model's size, which the browser uses for its progress bar.
 
 ## Results (held-out test set: his newest 2,190 games, 86,415 positions)
 

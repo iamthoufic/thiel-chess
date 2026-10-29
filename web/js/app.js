@@ -78,9 +78,11 @@ const engine = new Engine((state, info) => {
   const status = $('#engineStatus');
   status.className = `engine-status ${state === 'ready' ? 'ready' : state === 'loading' ? 'loading' : ''}`;
   if (state === 'loading') {
+    engine.progress = info;
     $('#loadBar').style.width = `${Math.round(info * 100)}%`;
-    $('#loadText').textContent = `Loading Peter ${Math.round(info * 100)}%`;
+    $('#loadText').textContent = engine.book ? `You can start · his network ${Math.round(info * 100)}%` : `Loading Peter ${Math.round(info * 100)}%`;
     $('#engineLabel').textContent = `Loading ${Math.round(info * 100)}%`;
+    if (game.status === 'playing' && game.thinking) setTitle();
   } else if (state === 'ready') {
     line.classList.add('done');
     $('#loadText').textContent = 'Runs entirely on this device';
@@ -94,6 +96,15 @@ const engine = new Engine((state, info) => {
     console.error(info);
   }
 });
+engine.progress = 0;
+// His book covers the first ten moves, so play can begin as soon as it is in,
+// long before the 27 MB network has arrived.
+engine.bookReady.then(() => {
+  if (engine.state === 'error') return;
+  $('#playBtn').disabled = false;
+  if (engine.state === 'loading') $('#loadText').textContent = `You can start · his network ${Math.round(engine.progress * 100)}%`;
+  renderSideTiles();
+}, () => {});
 
 // ---------------------------------------------------------------- game state
 const game = {
@@ -123,6 +134,9 @@ const game = {
 // nothing is shown until the game is over.
 const analyst = new Analyst();
 analyst.onProgress = () => { if (game.status === 'over') refreshReview(); };
+// Stockfish (the Game Review engine) waits for the network, so the two big
+// downloads do not compete for bandwidth at startup.
+analyst.after = engine.ready.catch(() => {});
 const peter = () => (game.you === 'w' ? 'b' : 'w');
 const live = () => game.view === game.plies.length;
 const uciMove = (u) => ({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
@@ -293,7 +307,8 @@ function setTitle() {
   renderSideTiles();
   if (game.status === 'over') return;
   if (game.status !== 'playing') { t.textContent = 'Ready'; return; }
-  t.textContent = game.chess.turn() === game.you ? 'Your move' : 'Peter is thinking…';
+  const loading = engine.state === 'loading' ? ` (loading ${Math.round(engine.progress * 100)}%)` : '';
+  t.textContent = game.chess.turn() === game.you ? 'Your move' : `Peter is thinking…${loading}`;
 }
 
 // Left column tiles follow the game: live actions only while a game is on.
@@ -305,7 +320,9 @@ function renderSideTiles() {
   $('#drawBtn').disabled = !playing;
   $('#resignBtn').disabled = !playing;
   const idle = game.status === 'idle';
-  $('#newTile').disabled = idle && engine.state !== 'ready';
+  // a game can start once his opening book is in: the network keeps
+  // downloading in the background and takes over after the book
+  $('#newTile').disabled = idle && !engine.book && engine.state !== 'ready';
   $('#newTileTitle').textContent = idle ? 'Play' : 'New game';
   $('#newTileSub').textContent = idle ? `${tcLabelFor(settings.tc)} · vs Peter` : 'Choose time and colour';
 }
@@ -453,7 +470,15 @@ function renderMoves() {
     html += `<div class="mrow"><span class="mnum">${i / 2 + 1}.</span>${cell(i + 1)}${cell(i + 2)}</div>`;
   }
   el.innerHTML = html;
-  el.querySelector('.cur')?.scrollIntoView({ block: 'nearest' });
+  // Keep the current move visible by scrolling the list itself. scrollIntoView
+  // would also scroll the page, which on a phone jumps the board off screen.
+  const cur = el.querySelector('.cur');
+  if (cur) {
+    const box = el.getBoundingClientRect();
+    const row = cur.getBoundingClientRect();
+    if (row.top < box.top) el.scrollTop += row.top - box.top;
+    else if (row.bottom > box.bottom) el.scrollTop += row.bottom - box.bottom;
+  }
   for (const btn of $$('[data-nav]')) {
     const back = btn.dataset.nav === 'start' || btn.dataset.nav === 'prev';
     btn.disabled = back ? game.view === 0 : live();

@@ -70,7 +70,7 @@ cd thiel-chess
 npm start
 ```
 
-Open <http://localhost:8080>. The first load downloads the 42.5 MB model; after that it is cached.
+Open <http://localhost:8080>. You can start playing as soon as his opening book is in (a second or two); the 27 MB model keeps downloading in the background and is cached after the first visit.
 
 ### Ask the model from Python
 
@@ -138,7 +138,7 @@ folder and, for multi-threaded inference, add the headers
 Without them the model runs on one thread, still well under a second per move.
 
 **Offline copy**: `npm install && npm run web:single` writes `web/dist/Thiel Chess.html`, a
-single ~90 MB file that opens straight from disk with no server.
+single ~68 MB file that opens straight from disk with no server.
 
 ## Repository layout
 

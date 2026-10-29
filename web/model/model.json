@@ -1,0 +1,5 @@
+{
+  "file": "thiel-maia2.onnx",
+  "variant": "int8linear",
+  "bytes": 27363714
+}
