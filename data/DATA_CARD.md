@@ -10,11 +10,14 @@ not as the person or an exact clone.
 
 ## Source and authorization
 
-Games come from the official Chess.com Published-Data API. The project
-maintainer obtained prior authorization from Chess.com for this training use;
-the authorization itself is not stored here. The game records are **not**
-redistributed in this repository: `pipeline/` rebuilds them. Anyone running
-the pipeline needs their own authorization under Chess.com's User Agreement.
+Games come from the official Chess.com Published-Data API. This is an
+academic, non-commercial project. The maintainer has **not** obtained written
+authorization from Chess.com, which its User Agreement requires for using its
+content to train models. The game records are **not** redistributed in this
+repository: `pipeline/` rebuilds them. The shipped model weights and opening
+book are derived from these games. They will be removed if Chess.com or the
+account holder asks; please open an issue on the repository to request this.
+Anyone running the pipeline should obtain their own authorization first.
 Repository visitors receive no rights to Chess.com content.
 
 ## Intended use

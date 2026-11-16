@@ -117,6 +117,9 @@ python web/tools/build-timing.py              #    think-time model            -
 > Chess.com's [User Agreement](https://www.chess.com/legal/user-agreement) requires prior
 > written authorization to use its content for training models; obtain it before running
 > step 1. See [`data/README.md`](data/README.md) and [`data/DATA_CARD.md`](data/DATA_CARD.md).
+> This is an academic, non-commercial project, and the maintainer has **not** obtained that
+> authorization. The model and opening book in `web/model/` will be removed on request from
+> Chess.com or the account holder.
 
 Rebuilding from the same raw archive reproduces the dataset byte for byte; compare against
 the checksums in `data/manifests/dataset.json`.

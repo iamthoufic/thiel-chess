@@ -134,7 +134,7 @@ const scores = legal.map((m) => Math.exp(out.logits.data[m.index] - max));`)}
 
       <h2 id="checks">How I checked it</h2>
       <ul>
-        <li><b>Python against JavaScript.</b> A test page encodes 65 positions in the browser, including castling, en passant and promotion cases, and compares the tensors, the legal moves and the model's probabilities with vectors written by the Python exporter. The largest difference is 0.0000063.</li>
+        <li><b>Python against JavaScript.</b> A test page encodes 65 positions in the browser, including castling, en passant and promotion cases, and compares the tensors, the legal moves and the model's probabilities with vectors written by the Python exporter. The top move matches in every position, and the probabilities differ by less than 0.01, because the browser's WebAssembly runtime rounds the compressed model slightly differently.</li>
         <li><b>ONNX against PyTorch.</b> The exported model picks the same top move as PyTorch in 99.75% of check positions, and matches his real moves as often as the full-precision export does (63.2% against 63.0% on 4,000 test positions).</li>
         <li><b>The app itself.</b> An automated suite of 107 in-browser checks covers settings, clocks, castling, en passant, promotion, every way a game can end, takebacks, the result card, the Stockfish review, the opening explorer and this blog, plus layout checks at five screen widths from phone to desktop.</li>
       </ul>
