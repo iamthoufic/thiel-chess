@@ -53,7 +53,12 @@ function myBadges() {
 }
 // An optional profile photo, kept apart from the settings because it is larger.
 const PHOTO = 'thiel-chess:photo';
-let photo = (() => { try { return localStorage.getItem(PHOTO) || ''; } catch { return ''; } })();
+// Only a base64 image data URL is ever written here; anything else (an edited or
+// foreign value on a shared origin) is ignored, because the photo is placed in an
+// <img src> attribute.
+const SAFE_PHOTO = /^data:image\/(?:webp|jpeg|png);base64,[A-Za-z0-9+/]+={0,2}$/;
+const safePhoto = (value) => (typeof value === 'string' && SAFE_PHOTO.test(value) ? value : '');
+let photo = (() => { try { return safePhoto(localStorage.getItem(PHOTO)); } catch { return ''; } })();
 // your avatar wherever it appears: the photo, else your initial, else the user icon
 function youAvatar(cls) {
   if (photo) return `<img class="${cls} avatar-you" src="${photo}" alt="">`;
@@ -1189,7 +1194,7 @@ function renderPhotoControls() {
   $('#photoRemove').hidden = !photo;
 }
 function setPhoto(dataUrl) {
-  photo = dataUrl;
+  photo = safePhoto(dataUrl);
   try {
     if (photo) localStorage.setItem(PHOTO, photo); else localStorage.removeItem(PHOTO);
   } catch { toast('Could not save the photo in this browser'); }

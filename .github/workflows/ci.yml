@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+# The workflow only reads the repository; give its token nothing more.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest

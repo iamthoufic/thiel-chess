@@ -10,10 +10,59 @@ export const KEEP = 20;
 
 const EMPTY = () => ({ version: 1, games: [], record: { win: 0, draw: 0, loss: 0, best: null } });
 
+// localStorage is shared with every page on this origin (for example anything
+// else served from localhost:8080) and can be edited by hand, so the store is
+// treated as untrusted: games that do not have exactly the expected shape are
+// dropped before any of their fields reach the page.
+const KINDS = new Set(['brilliant', 'great', 'best', 'excellent', 'good', 'book', 'forced', 'inaccuracy', 'mistake', 'miss', 'blunder']);
+const UCI = /^[a-h][1-8][a-h][1-8][qrbn]?$/;
+const SQUARE = /^[a-h][1-8]$/;
+const SAN = /^[A-Za-z0-9+#=-]{1,10}$/;
+const isNum = (n) => typeof n === 'number' && Number.isFinite(n);
+const isNumOrNull = (n) => n === null || n === undefined || isNum(n);
+const isShortText = (t, max) => typeof t === 'string' && t.length <= max;
+
+function validReview(r) {
+  if (r === null || r === undefined) return true;
+  return typeof r === 'object' && KINDS.has(r.kind)
+    && ['loss', 'bestWin', 'playedWin', 'accuracy'].every((k) => isNumOrNull(r[k]))
+    && (r.to === undefined || r.to === null || SQUARE.test(r.to))
+    && (r.best === undefined || r.best === null || UCI.test(r.best))
+    && (r.bestSan === undefined || r.bestSan === null || SAN.test(r.bestSan))
+    && (r.evalAfter === undefined || r.evalAfter === null || typeof r.evalAfter === 'object');
+}
+
+function validGame(g) {
+  return g && typeof g === 'object'
+    && isNum(g.id)
+    && typeof g.date === 'string' && !Number.isNaN(Date.parse(g.date))
+    && (g.you === 'w' || g.you === 'b')
+    && ['win', 'draw', 'loss'].includes(g.outcome)
+    && (g.tc === null || (typeof g.tc === 'string' && /^\d{1,5}\+\d{1,3}$/.test(g.tc)))
+    && (g.winner === null || g.winner === undefined || g.winner === 'w' || g.winner === 'b')
+    && isShortText(g.reason ?? '', 40) && isShortText(g.label ?? '', 120)
+    && Array.isArray(g.moves) && g.moves.length <= 2000 && g.moves.every((m) => typeof m === 'string' && UCI.test(m))
+    && g.clock && typeof g.clock === 'object' && isNum(g.clock.w) && isNum(g.clock.b)
+    && isNumOrNull(g.accYou) && isNumOrNull(g.accPeter)
+    && (g.reviews === null || g.reviews === undefined
+      || (Array.isArray(g.reviews) && g.reviews.length <= g.moves.length && g.reviews.every(validReview)));
+}
+
+function validRecord(r) {
+  const count = (n) => Number.isInteger(n) && n >= 0;
+  return r && typeof r === 'object' && count(r.win) && count(r.draw) && count(r.loss) && isNumOrNull(r.best);
+}
+
 function load() {
   try {
     const data = JSON.parse(localStorage.getItem(KEY) || 'null');
-    if (data?.version === 1 && Array.isArray(data.games)) return data;
+    if (data?.version === 1 && Array.isArray(data.games)) {
+      return {
+        version: 1,
+        games: data.games.filter(validGame).slice(0, KEEP),
+        record: validRecord(data.record) ? data.record : EMPTY().record,
+      };
+    }
   } catch { /* unreadable: start again */ }
   return EMPTY();
 }

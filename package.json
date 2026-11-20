@@ -14,7 +14,7 @@
     "data": "npm run data:fetch && npm run data:build",
     "web:book": "node web/tools/build-book.mjs",
     "web:single": "node web/tools/build-single.mjs",
-    "test": "node --test tests/pipeline.test.mjs"
+    "test": "node --test tests/pipeline.test.mjs tests/security.test.mjs"
   },
   "devDependencies": {
     "chess.js": "^1.4.0",
