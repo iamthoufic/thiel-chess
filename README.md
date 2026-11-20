@@ -65,7 +65,7 @@ White games and the Sicilian in 99.8% of his replies to 1.e4 ([EDA](docs/eda.md)
 Requires [Node.js](https://nodejs.org/) 20.11 or newer. No install needed to play.
 
 ```bash
-git clone https://github.com/<your-username>/thiel-chess.git
+git clone https://github.com/iamthoufic/thiel-chess.git
 cd thiel-chess
 npm start
 ```
@@ -101,7 +101,7 @@ Pass a FEN to analyse any position, `--top N` for more moves, `--json` for machi
 
 ```bash
 npm install                                   # chess.js for the data pipeline
-npm run data                                  # 1. fetch + 2. clean and split   -> data/
+npm run data                                  # 1. fetch + 2. clean and split   -> data/  (optional: already committed)
 pip install -r requirements.txt
 python analysis/eda.py                        # 3. analysis and charts         -> docs/eda/
 # 4. training: install PyTorch for your machine first, see training/README.md
@@ -113,10 +113,10 @@ npm run web:book                              # 6. opening book                -
 python web/tools/build-timing.py              #    think-time model            -> web/model/timing.json
 ```
 
-> **Data authorization.** The game records are not included in this repository.
-> Chess.com's [User Agreement](https://www.chess.com/legal/user-agreement) requires prior
-> written authorization to use its content for training models; obtain it before running
-> step 1. See [`data/README.md`](data/README.md) and [`data/DATA_CARD.md`](data/DATA_CARD.md).
+> **Data authorization.** The processed dataset is included in `data/` (compressed), so steps
+> 1 and 2 are optional: you can start from step 3. Chess.com's
+> [User Agreement](https://www.chess.com/legal/user-agreement) requires prior written
+> authorization to use its content for training models. See [`data/README.md`](data/README.md) and [`data/DATA_CARD.md`](data/DATA_CARD.md).
 > This is an academic, non-commercial project, and the maintainer has **not** obtained that
 > authorization. The model and opening book in `web/model/` will be removed on request from
 > Chess.com or the account holder.

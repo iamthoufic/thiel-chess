@@ -3,11 +3,13 @@
 The corpus is every public game of the Chess.com account **`PeterThiel`**:
 43,797 games (18 Dec 2016 → 21 Oct 2026) and 1,715,752 of his own moves.
 
-The game records themselves are **not committed** (see `../THIRD_PARTY_NOTICES.md`
-and `DATA_CARD.md`). The two scripts in `../pipeline/` rebuild them from the
-official API in a few minutes; the manifests in `manifests/` record the exact
-counts and SHA-256 checksums of the build the model was trained on, so you can
-check you have the same data.
+The dataset the model was trained on is **committed here**, gzip-compressed, so
+you can use it straight after cloning (see `../THIRD_PARTY_NOTICES.md` and
+`DATA_CARD.md`). Only the uncompressed raw PGN (~115 MB, over GitHub's file
+limit) is left out; `npm run data:fetch` recreates it. The manifests in
+`manifests/` record the exact counts and SHA-256 checksums of every file, and
+the two scripts in `../pipeline/` rebuild everything from the official API if
+you want newer games.
 
 > **Authorization.** Chess.com's User Agreement requires prior written
 > authorization to use its content for training models. Obtain it before you

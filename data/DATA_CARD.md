@@ -13,10 +13,12 @@ not as the person or an exact clone.
 Games come from the official Chess.com Published-Data API. This is an
 academic, non-commercial project. The maintainer has **not** obtained written
 authorization from Chess.com, which its User Agreement requires for using its
-content to train models. The game records are **not** redistributed in this
-repository: `pipeline/` rebuilds them. The shipped model weights and opening
-book are derived from these games. They will be removed if Chess.com or the
-account holder asks; please open an issue on the repository to request this.
+content to train models. The game records (publicly available through the
+Published-Data API) are included in this repository, gzip-compressed, in
+`raw/` and `processed/`; `pipeline/` can also rebuild them. The shipped model
+weights and opening book are derived from these games. The data, model and
+book will be removed if Chess.com or the account holder asks; please open an
+issue on the repository to request this.
 Anyone running the pipeline should obtain their own authorization first.
 Repository visitors receive no rights to Chess.com content.
 

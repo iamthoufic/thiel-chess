@@ -21,10 +21,11 @@ app, keep `web/vendor/stockfish/COPYING.txt` with it.
 ## Data
 
 Game records come from the [Chess.com Published-Data API](https://www.chess.com/news/view/published-data-api).
-They are **not** included in this repository. Chess.com's
+They are included in `data/` (gzip-compressed) for reproducibility and are
+**not** covered by this project's MIT license. Chess.com's
 [User Agreement](https://www.chess.com/legal/user-agreement) requires prior
 written authorization to use its content to develop engines or training
-models; obtain it before running the data pipeline. See `data/DATA_CARD.md`.
+models. See `data/DATA_CARD.md`.
 
 The illustrated portraits of Peter Thiel in `web/img/peter/` are original
 artwork made for this project. The project is not affiliated with Peter Thiel
